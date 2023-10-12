@@ -256,8 +256,7 @@ class PalletLoading(object):
         action = np.round(np.array(normalized_action) * self.render_resolution)
         # make box region #
         cy, cx = action
-        # by, bx = self.next_block
-        by, bx = np.round(np.array(self.next_block) * self.render_resolution).astype(
+        by, bx = np.round(np.array(self.next_block_rotated) * self.render_resolution).astype(
             int
         )
         min_y = np.round(cy - (by - 1e-5) / 2).astype(int)
@@ -273,7 +272,7 @@ class PalletLoading(object):
     def place_block_in_obs_img(self, action):
         # make box region #
         cy, cx = action
-        by, bx = self.next_block
+        by, bx = self.next_block_rotated
         min_y = np.floor((cy - (by + 1e-5) / 2) * self.obs_resolution + 0.5).astype(int)
         min_x = np.floor((cx - (bx + 1e-5) / 2) * self.obs_resolution + 0.5).astype(int)
         max_y = np.floor((cy + (by + 1e-5) / 2) * self.obs_resolution - 0.5).astype(int)
@@ -293,15 +292,31 @@ class PalletLoading(object):
         # previous state #
         previous_render_state = self.render_state
 
+        # check if action contains transformation
+        if(len(action) == 3):
+            action_pos = action[:2]
+            action_rot = action[2]
+        elif(len(action)==2):
+            action_pos = action
+            action_rot = 0
+        else:
+            raise Exception("Action space should be [p_x, p_y] or [p_x, p_y, roatation \in {0,1}]")
+        
+        # rotate block by an action
+        if action_rot:
+            self.next_block_rotated = np.array([self.next_block[1], self.next_block[0]])
+        else:
+            self.next_block_rotated = self.next_block
+
         # clip action to (0.0, 1.0)
-        action = np.clip(action, 1e-5, 1 - 1e-5)
+        action_pos = np.clip(action_pos, 1e-5, 1 - 1e-5)
         if self.render:
-            self.place_block_in_render_state(action)
-        self.place_block_in_obs_img(action)
+            self.place_block_in_render_state(action_pos)
+        self.place_block_in_obs_img(action_pos)
 
         # check out of range #
-        y_action, x_action = action
-        block_height, block_width = self.next_block
+        y_action, x_action = action_pos
+        block_height, block_width = self.next_block_rotated
 
         if is_out_of_range(x_action, y_action, block_width, block_height):
             out_of_range = True
@@ -335,6 +350,8 @@ class PalletLoading(object):
 
 
 if __name__ == "__main__":
+    import random
+
     box_norm = True
     env = PalletLoading(
         obs_resolution=10,
@@ -354,6 +371,9 @@ if __name__ == "__main__":
         for i in range(100):
             random_action = np.random.uniform(0.1, 0.9, 2)
             action = random_action.tolist()
+            # random rotation
+            action_rot = random.randrange(0,2)
+            action.append(action_rot)
             # print('action:', action)
             # state, next_block, reward, end = env.step(action)
             obs, reward, end = env.step(action)
