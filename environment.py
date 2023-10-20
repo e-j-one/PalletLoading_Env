@@ -1,10 +1,10 @@
-import time
+import random
 import numpy as np
+from typing import List
 import matplotlib
+from matplotlib import pyplot as plt
 
 matplotlib.use("TkAgg")
-from matplotlib import pyplot as plt
-from typing import List
 
 
 def is_out_of_range(x, y, width, height):
@@ -72,6 +72,8 @@ class PalletLoading(object):
         num_preview=5,
         box_norm=False,
         render=False,
+        use_preset_block_size=True,
+        preset_block_size=[0.199, 0.299, 0.499],
         block_size_min=0.2,
         block_size_max=0.4,
         plot_obs=True,
@@ -103,6 +105,8 @@ class PalletLoading(object):
         self.render = render
         self.block_size_min = block_size_min
         self.block_size_max = block_size_max
+        self.use_preset_block_size = use_preset_block_size
+        self.preset_block_size = preset_block_size
         self.plot_obs = plot_obs
 
         if self.render:
@@ -235,7 +239,15 @@ class PalletLoading(object):
 
     def get_next_block(self):
         next_block = self.block_que.pop(0)
-        new_block = np.random.uniform(self.block_size_min, self.block_size_max, 2)
+        if self.use_preset_block_size:
+            new_block = np.array(
+                [
+                    random.choice(self.preset_block_size),
+                    random.choice(self.preset_block_size),
+                ]
+            )
+        else:
+            new_block = np.random.uniform(self.block_size_min, self.block_size_max, 2)
         self.block_que.append(new_block)
         return next_block
 
@@ -245,9 +257,20 @@ class PalletLoading(object):
         self.step_count = 0
 
         # next block: (height, width)
-        self.block_que = np.random.uniform(
-            self.block_size_min, self.block_size_max, [self.num_preview, 2]
-        ).tolist()
+        if self.use_preset_block_size:
+            self.block_que = []
+            for i in range(self.num_preview):
+                new_block = np.array(
+                    [
+                        random.choice(self.preset_block_size),
+                        random.choice(self.preset_block_size),
+                    ]
+                )
+                self.block_que.append(new_block)
+        else:
+            self.block_que = np.random.uniform(
+                self.block_size_min, self.block_size_max, [self.num_preview, 2]
+            ).tolist()
 
         next_block = self.get_next_block()
         return obs_img, render_state, next_block
@@ -256,9 +279,9 @@ class PalletLoading(object):
         action = np.round(np.array(normalized_action) * self.render_resolution)
         # make box region #
         cy, cx = action
-        by, bx = np.round(np.array(self.next_block_rotated) * self.render_resolution).astype(
-            int
-        )
+        by, bx = np.round(
+            np.array(self.next_block_rotated) * self.render_resolution
+        ).astype(int)
         min_y = np.round(cy - (by - 1e-5) / 2).astype(int)
         min_x = np.round(cx - (bx - 1e-5) / 2).astype(int)
         max_y = np.round(cy + (by - 1e-5) / 2).astype(int)
@@ -293,15 +316,17 @@ class PalletLoading(object):
         previous_render_state = self.render_state
 
         # check if action contains transformation
-        if(len(action) == 3):
+        if len(action) == 3:
             action_pos = action[:2]
             action_rot = action[2]
-        elif(len(action)==2):
+        elif len(action) == 2:
             action_pos = action
             action_rot = 0
         else:
-            raise Exception("Action space should be [p_x, p_y] or [p_x, p_y, roatation \in {0,1}]")
-        
+            raise Exception(
+                "Action space should be [p_x, p_y] or [p_x, p_y, roatation \in {0,1}]"
+            )
+
         # rotate block by an action
         if action_rot:
             self.next_block_rotated = np.array([self.next_block[1], self.next_block[0]])
@@ -350,13 +375,11 @@ class PalletLoading(object):
 
 
 if __name__ == "__main__":
-    import random
-
     box_norm = True
     env = PalletLoading(
         obs_resolution=10,
         box_norm=box_norm,
-        render=True,
+        render=False,
         block_size_min=0.1,
         block_size_max=0.25,
     )
@@ -370,9 +393,11 @@ if __name__ == "__main__":
         # print(f'Episode {ep} starts.')
         for i in range(100):
             random_action = np.random.uniform(0.1, 0.9, 2)
+            # print(obs[0])
+            # print(obs[1])
             action = random_action.tolist()
             # random rotation
-            action_rot = random.randrange(0,2)
+            action_rot = random.randrange(0, 2)
             action.append(action_rot)
             # print('action:', action)
             # state, next_block, reward, end = env.step(action)
