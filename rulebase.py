@@ -5,9 +5,9 @@ from environment import PalletLoading
 
 
 class RulebasePallasdfetLoader:
-    def __init__(self, obs_resolution, margin_res=1):
+    def __init__(self, obs_resolution, margin_ratio=0.05):
         self.obs_resolution = obs_resolution
-        self.margin_res = margin_res
+        self.margin_ratio = margin_ratio
 
     def print_obs(self, obs):
         print(obs)
@@ -34,7 +34,7 @@ class RulebasePallasdfetLoader:
 
     def brute_force_search(self, obs):
         image_obs, block_size = obs
-        # print(obs)
+        # print(image_obs)
         block_res_width = math.ceil(block_size[0] * self.obs_resolution)
         block_res_height = math.ceil(block_size[1] * self.obs_resolution)
         # print("block res", block_res_width, block_res_height)
@@ -78,19 +78,17 @@ class RulebasePallasdfetLoader:
 
 def main():
     box_norm = True
-    obs_resolution = 480
+    obs_resolution = 10
     env = PalletLoading(
         obs_resolution=obs_resolution,
         box_norm=box_norm,
         render=False,
-        block_size_min=0.1,
-        block_size_max=0.25,
     )
     # state, next_block = env.reset()
     predictor = RulebasePallasdfetLoader(obs_resolution)
 
     total_reward = 0.0
-    num_episodes = 100
+    num_episodes = 1000
     for ep in range(num_episodes):
         obs = env.reset()
         ep_reward = 0.0

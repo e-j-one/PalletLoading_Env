@@ -2,9 +2,9 @@ import random
 import numpy as np
 from typing import List
 import matplotlib
-from matplotlib import pyplot as plt
 
 matplotlib.use("TkAgg")
+from matplotlib import pyplot as plt
 
 
 def is_out_of_range(x, y, width, height):
@@ -66,14 +66,14 @@ class Floor:
 class PalletLoading(object):
     def __init__(
         self,
-        obs_resolution=32,
-        render_resolution=512,
+        obs_resolution=100,
+        render_resolution=100,
         num_steps=100,
         num_preview=5,
         box_norm=False,
         render=False,
         use_preset_block_size=True,
-        preset_block_size=[0.199, 0.299, 0.499],
+        preset_block_size=[0.18, 0.28, 0.38, 0.48],
         block_size_min=0.2,
         block_size_max=0.4,
         plot_obs=True,
