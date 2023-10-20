@@ -32,8 +32,7 @@ class RulebasePallasdfetLoader:
         action.append(action_rot)
         return action
 
-    def brute_force_search(self, obs):
-        image_obs, block_size = obs
+    def greedy_search(self, image_obs, block_size):
         # print(image_obs)
         block_res_width = math.ceil(block_size[0] * self.obs_resolution)
         block_res_height = math.ceil(block_size[1] * self.obs_resolution)
@@ -70,10 +69,26 @@ class RulebasePallasdfetLoader:
                 action_i = (obs_i + 0.5 * block_res_width) / self.obs_resolution
                 action_j = (obs_j + 0.5 * block_res_height) / self.obs_resolution
                 # print("\t\treturn:", action_i, action_j)
-                return [action_i, action_j, 0]
+                return [action_i, action_j]
 
         # print("action not found")
-        return (0, 0)
+        return None
+
+    def rotate_block(self, block_size):
+        rotated_block = [block_size[1], block_size[0]]
+        return rotated_block
+
+    def get_greedy_action(self, obs):
+        image_obs, block_size = obs
+        action_pos = self.greedy_search(image_obs, block_size)
+        action_rot = [0]
+        if action_pos == None:
+            action_pos = self.greedy_search(image_obs, self.rotate_block(block_size))
+            action_rot = [1]
+
+        if action_pos == None:
+            return [0, 0, 0]
+        return action_pos + action_rot
 
 
 def main():
@@ -88,13 +103,13 @@ def main():
     predictor = RulebasePallasdfetLoader(obs_resolution)
 
     total_reward = 0.0
-    num_episodes = 1000
+    num_episodes = 10000
     for ep in range(num_episodes):
         obs = env.reset()
         ep_reward = 0.0
         # print(f'Episode {ep} starts.')
         for i in range(100):
-            action = predictor.brute_force_search(obs)
+            action = predictor.get_greedy_action(obs)
             obs, reward, end = env.step(action)
             ep_reward += reward
             if end:
