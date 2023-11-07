@@ -283,11 +283,7 @@ class PalletLoadingSim(object):
             self.renderer.render_current_state(self.state, next_blocks, self.state)
         
         if self.box_norm:
-<<<<<<< HEAD
-            next_block = np.array(self.next_block)
-=======
             next_block = np.copy(self.next_block)
->>>>>>> origin/minjae
         else:
             next_block = np.round(np.copy(self.next_block) * self.resolution).astype(int)
             
