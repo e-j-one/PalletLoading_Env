@@ -215,6 +215,13 @@ class RewardFunc():
             beta_1 = 1.0
             beta_2 = 1.0
             reward = beta_1 * reward_1 + beta_2 * reward_2
+        elif self.reward_type=='area_per_surface_v0':
+            surface_next = self.get_pad_from_scene(next_state, False).sum()
+            # print("surface_next:", surface_next)
+            area_next =  next_state.sum()
+            # print("area_next:", area_next)
+            reward = area_next / (surface_next + 0.1)
+        
         return reward, episode_end
 
     def get_3d_reward(self, state, block_bound, stacked_history, level_map, box_level):
@@ -602,11 +609,23 @@ class FloorN(PalletLoadingSim):
 if __name__=='__main__':
     box_norm = True
     action_norm = True
-    env = Floor1(resolution=32, box_norm=box_norm, action_norm=action_norm, render=False, block_size_min=0.1, block_size_max=0.25)
+    env = Floor1(
+        resolution=20,
+        num_preview=5,
+        box_norm=box_norm,
+        action_norm=action_norm,
+        render=True,
+        block_size_min=0.1,
+        block_size_max=0.25,
+        discrete_block=True,
+        max_levels=1,
+        show_q=True,
+        reward_type='area_per_surface_v0'
+        )
     # state, next_block = env.reset()
 
     total_reward = 0.
-    num_episodes = 100 
+    num_episodes = 1 
     for ep in range(num_episodes):
         obs = env.reset()
         ep_reward = 0.
@@ -618,6 +637,7 @@ if __name__=='__main__':
             else:
                 random_action = np.random.uniform(0.1, 0.9, 2) * env.resolution
                 action = np.round(random_action).astype(int).tolist()
+            action = [0, action[0], action[1]]
             # print('action:', action)
             # state, next_block, reward, end = env.step(action)
             obs, reward, end = env.step(action)

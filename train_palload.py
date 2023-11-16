@@ -279,7 +279,7 @@ if __name__=='__main__':
     parser.add_argument("--discrete", action="store_true")
     parser.add_argument("--max_steps", default=50, type=int)
     parser.add_argument("--resolution", default=10, type=int)
-    parser.add_argument("--reward", default='dense_v3', type=str)
+    parser.add_argument("--reward", default='area_per_surface_v0', type=str)
     parser.add_argument("--max_levels", default=1, type=int)
     ## learning ##
     parser.add_argument("--lr", default=3e-4, type=float)
