@@ -3,9 +3,9 @@ import time
 import math
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
-
+from scipy.signal import convolve2d
 
 class Renderer():
     def __init__(self, resolution, show_q=False):
@@ -221,6 +221,25 @@ class RewardFunc():
             area_next =  next_state.sum()
             # print("area_next:", area_next)
             reward = area_next / (surface_next + 0.1)
+        elif self.reward_type=="availablity_ratio_v0":
+            p_bound = self.get_pad_from_scene(np.zeros(np.shape(state)), True)
+            p_current = self.get_pad_from_scene(state, False)
+            # check collision for 5 arbitrary size boxes
+            safe_place_num = 0
+            ideal_place_num = 0
+            for _ in range(5):
+                rand_box = (np.ceil(18.0 * np.random.choice([0.2, 0.3, 0.4, 0.5], 2, True, p=[0.4, 0.3, 0.2, 0.1]))).astype(int)
+                rand_box_ker1 = np.ones(rand_box).astype(int)
+                rand_box_ker2 = np.ones(np.flip(rand_box)).astype(int)
+                safe_place_num += len(np.where(convolve2d(next_state.astype(int), rand_box_ker1, mode='valid') == 0))
+                safe_place_num += len(np.where(convolve2d(next_state.astype(int), rand_box_ker2, mode='valid') == 0))
+                
+                edge_len = np.floor(np.sqrt(next_state.shape[0] * next_state.shape[1] - next_state.sum())).astype(int)
+                if edge_len - rand_box[0] + 1 > 0 and edge_len - rand_box[1] + 1 > 0:
+                    ideal_place_num += 2 * (edge_len - rand_box[0] + 1) * (edge_len - rand_box[1] + 1)
+
+            reward = 0.5 * np.multiply(p_bound, box_placed).sum() \
+                + np.multiply(p_current, box_placed).sum() + 10.0 * (safe_place_num / ideal_place_num)
         
         return reward, episode_end
 

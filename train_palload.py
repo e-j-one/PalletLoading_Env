@@ -78,7 +78,7 @@ def learning(
         learning_rate=1e-4, 
         batch_size=64, 
         buff_size=1e4, 
-        total_episodes=1e6,
+        total_episodes=1e7,
         learn_start=1e4,
         update_freq=100,
         log_freq=1e3,
@@ -279,13 +279,13 @@ if __name__=='__main__':
     parser.add_argument("--discrete", action="store_true")
     parser.add_argument("--max_steps", default=50, type=int)
     parser.add_argument("--resolution", default=10, type=int)
-    parser.add_argument("--reward", default='area_per_surface_v0', type=str)
+    parser.add_argument("--reward", default='availablity_ratio_v0', type=str)
     parser.add_argument("--max_levels", default=1, type=int)
     ## learning ##
     parser.add_argument("--lr", default=3e-4, type=float)
     parser.add_argument("--bs", default=128, type=int)
     parser.add_argument("--buff_size", default=1e5, type=float)
-    parser.add_argument("--total_episodes", default=2e5, type=float)
+    parser.add_argument("--total_episodes", default=2e6, type=float)
     parser.add_argument("--learn_start", default=1e3, type=float)
     parser.add_argument("--update_freq", default=250, type=int)
     parser.add_argument("--log_freq", default=250, type=int)
@@ -295,7 +295,7 @@ if __name__=='__main__':
     parser.add_argument("--continue_learning", action="store_true")
     ## Evaluate ##
     parser.add_argument("--evaluate", action="store_true")
-    parser.add_argument("--model_path", default="1108_2344", type=str)
+    parser.add_argument("--model_path", default="1117_0043_area_per_surface_V0", type=str)
     parser.add_argument("--num_trials", default=50, type=int)
     # etc #
     parser.add_argument("--show_q", action="store_true")
@@ -315,7 +315,8 @@ if __name__=='__main__':
 
     # evaluate configuration #
     evaluation = False # True False #args.evaluate
-    model_path = os.path.join("results/models/FCDQN_%s.pth"%args.model_path)
+    # model_path = os.path.join("results/models/FCDQN_%s.pth"%args.model_path)
+    model_path = os.path.join("results/models/FCDQN-L1_1117_0043_area_per_surface_v0.pth")
     num_trials = args.num_trials
     show_q = True# args.show_q
 
@@ -380,7 +381,8 @@ if __name__=='__main__':
 
     #half = args.half
     #small = args.small
-    continue_learning = args.continue_learning
+    continue_learning = False
+    # continue_learning = args.continue_learning
     
     n_hidden = 16
     from models import FCQResNetSmallV1113 as FCQNet
